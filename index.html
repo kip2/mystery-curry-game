@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>にこにこ町カレー大会殺人事件</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+.screen {
+  display: none;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+}
+.screen.active { display: block; }
+
+h1 {
+  text-align: center;
+  color: #e94560;
+  font-size: 1.8em;
+  margin-bottom: 10px;
+}
+h2 {
+  color: #e94560;
+  font-size: 1.3em;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #e94560;
+  padding-bottom: 5px;
+}
+
+/* イントロ画面 */
+#intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+#intro h1 { font-size: 2.2em; margin-bottom: 20px; }
+.intro-text {
+  background: #16213e;
+  border: 1px solid #e94560;
+  border-radius: 10px;
+  padding: 25px;
+  margin: 20px 0;
+  max-width: 600px;
+  line-height: 1.8;
+  text-align: left;
+}
+.intro-text p { margin-bottom: 12px; }
+
+.btn {
+  background: #e94560;
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  font-size: 1.1em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+.btn:hover { background: #c73e54; transform: scale(1.05); }
+
+/* 捜査画面 */
+.progress-bar {
+  background: #16213e;
+  border-radius: 20px;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px solid #333;
+}
+.progress-bar span { color: #e94560; font-weight: bold; }
+
+.hint-text {
+  background: #0f3460;
+  border-left: 4px solid #e94560;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  font-size: 0.9em;
+  border-radius: 0 5px 5px 0;
+}
+
+.suspects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+@media (max-width: 600px) {
+  .suspects { grid-template-columns: 1fr; }
+}
+
+.suspect-card {
+  background: #16213e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 15px;
+  transition: border-color 0.3s;
+}
+.suspect-card .name {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-bottom: 3px;
+}
+.suspect-card .desc {
+  font-size: 0.8em;
+  color: #888;
+  margin-bottom: 10px;
+}
+.timeline-entry {
+  padding: 6px 8px;
+  margin: 4px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85em;
+  line-height: 1.4;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.timeline-entry:hover {
+  background: #0f3460;
+}
+.timeline-entry.selected {
+  border-color: #e94560;
+  background: #2a1a3e;
+}
+.timeline-entry.found {
+  border-color: #4ecca3;
+  background: #1a3e2e;
+  cursor: default;
+}
+.timeline-entry .time {
+  color: #e94560;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.contradiction-found {
+  background: #1a3e2e;
+  border: 2px solid #4ecca3;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 15px 0;
+  animation: fadeIn 0.5s;
+}
+.contradiction-found h3 {
+  color: #4ecca3;
+  margin-bottom: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.shake { animation: shake 0.3s; }
+
+/* 告発画面 */
+.accuse-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 20px 0;
+}
+@media (max-width: 600px) {
+  .accuse-cards { grid-template-columns: 1fr; }
+}
+.accuse-card {
+  background: #16213e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 20px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s;
+}
+.accuse-card:hover {
+  border-color: #e94560;
+  transform: scale(1.03);
+}
+.accuse-card .emoji { font-size: 2em; margin-bottom: 8px; }
+
+/* 結果画面 */
+.result-section {
+  background: #16213e;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 15px 0;
+  line-height: 1.8;
+}
+.result-section.truth {
+  border: 2px solid #e94560;
+  background: #2a0a1e;
+}
+.result-section p { margin-bottom: 10px; }
+.result-correct { color: #4ecca3; }
+.result-wrong { color: #e94560; }
+
+.spoiler {
+  background: #e94560;
+  color: #e94560;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.3s;
+  user-select: none;
+}
+.spoiler.revealed {
+  background: transparent;
+  color: #e0e0e0;
+}
+
+.restart-area {
+  text-align: center;
+  margin-top: 30px;
+}
+
+/* 通知 */
+.notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e94560;
+  color: white;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-size: 0.95em;
+  z-index: 100;
+  animation: fadeIn 0.3s;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<!-- イントロ画面 -->
+<div id="intro" class="screen active">
+  <h1>にこにこ町<br>カレー大会殺人事件</h1>
+  <div class="intro-text">
+    <p>毎年恒例、にこにこ町のカレー大会。</p>
+    <p>住民たちが自慢のカレーを持ち寄り、笑顔があふれる楽しいイベント......のはずだった。</p>
+    <p>大会終了後、参加者の<strong>山田さん</strong>が会場で倒れているのが発見された。病院に搬送されたが、まもなく<strong style="color:#e94560">死亡が確認</strong>された。</p>
+    <p>死因は<strong style="color:#e94560">毒物摂取</strong>。山田さんが食べたカレーに毒が混入されていた。</p>
+    <p>容疑者は大会に参加していた<strong>4人</strong>。<br>彼らの証言タイムラインを比較し、<strong style="color:#e94560">3つの矛盾</strong>を見つけ出して犯人を特定せよ！</p>
+  </div>
+  <button class="btn" onclick="startGame()">捜査を開始する</button>
+</div>
+
+<!-- 捜査画面 -->
+<div id="investigation" class="screen">
+  <h1>捜査フェーズ</h1>
+  <div class="progress-bar">
+    矛盾発見: <span id="found-count">0</span> / 3
+  </div>
+  <div class="hint-text">
+    証言をクリックして選択し、矛盾する別の証言をクリックしてください。
+  </div>
+  <div id="contradictions-list"></div>
+  <div class="suspects" id="suspects-area"></div>
+  <div id="accuse-area" style="text-align:center; margin-top:25px;"></div>
+</div>
+
+<!-- 告発画面 -->
+<div id="accuse" class="screen">
+  <h1>告発フェーズ</h1>
+  <div class="result-section">
+    <p>3つの矛盾が明らかになった。</p>
+    <p>すべての証拠を踏まえて、<strong style="color:#e94560">犯人は誰だ？</strong></p>
+  </div>
+  <div class="accuse-cards" id="accuse-cards"></div>
+</div>
+
+<!-- 結果画面 -->
+<div id="result" class="screen">
+  <h1 id="result-title"></h1>
+  <div id="result-content"></div>
+  <div class="restart-area">
+    <button class="btn" onclick="location.reload()">もう一度プレイする</button>
+  </div>
+</div>
+
+<script>
+// ゲームデータ
+const suspects = [
+  {
+    id: 'nakamura',
+    name: '中村会長',
+    desc: '50代男性・町内会長。テンションが異常に高い。',
+    emoji: '👔',
+    timeline: [
+      { time: '10:00', text: '開会宣言をしました！今年も盛り上がるぞー！最高！', id: 'n1' },
+      { time: '10:30', text: '各ブースを回って激励。山田さんのカレーはいい香りでしたよ！', id: 'n2' },
+      { time: '11:00', text: '停電が起きました。5分くらいで復旧しましたかね！', id: 'n3' },
+      { time: '11:15', text: '鈴木おばあちゃんと一緒にお茶を飲んでいました！', id: 'n4' },
+      { time: '11:30', text: '審査を開始しました！ワクワク！', id: 'n5' },
+      { time: '12:00', text: '山田さんが倒れているのを発見しました......', id: 'n6' },
+    ]
+  },
+  {
+    id: 'sato',
+    name: '佐藤さん',
+    desc: '40代女性・主婦。料理の腕に絶対の自信。',
+    emoji: '👩‍🍳',
+    timeline: [
+      { time: '10:00', text: '準備万端！今年こそ優勝するわ！', id: 's1' },
+      { time: '10:30', text: '自分のカレーに集中してたわ。隠し味のチョコが決め手よ！', id: 's2' },
+      { time: '11:00', text: '停電？10分くらいあったわよ。長く感じたわ〜。', id: 's3' },
+      { time: '11:15', text: '山田さんのブースの近くを通ったら、いつもと違う匂いがしたの。', id: 's4' },
+      { time: '11:30', text: '審査、楽しみにしてたわ！自信あるもの！', id: 's5' },
+      { time: '12:00', text: '山田さんが……信じられないわ……', id: 's6' },
+    ]
+  },
+  {
+    id: 'tanaka',
+    name: '田中くん',
+    desc: '20代男性・大学生バイト。食べることが大好き。',
+    emoji: '🧑‍🎓',
+    timeline: [
+      { time: '10:00', text: '設営の片付けしてました〜。朝早くてねむい。', id: 't1' },
+      { time: '10:30', text: '休憩もらって食べ歩き。佐藤さんのカレーうまかったっす！', id: 't2' },
+      { time: '11:00', text: '停電で真っ暗に。スマホのライトつけたら、山田さんのブースに誰かいたんすよ。', id: 't3' },
+      { time: '11:15', text: '電気の復旧を手伝ってました。汗だくっす。', id: 't4' },
+      { time: '11:30', text: '審査の配膳手伝いました。味見の役得っす！', id: 't5' },
+      { time: '12:00', text: '山田さんに声かけたら反応なくて……すぐ会長呼びました。', id: 't6' },
+    ]
+  },
+  {
+    id: 'suzuki',
+    name: '鈴木おばあちゃん',
+    desc: '70代女性・毎年参加の常連。優しい笑顔。',
+    emoji: '👵',
+    timeline: [
+      { time: '10:00', text: '今年も来たわよ〜。元気が一番ね！', id: 'z1' },
+      { time: '10:30', text: 'あちこち歩き回って、皆さんの様子を見てたわ。', id: 'z2' },
+      { time: '11:00', text: '停電？5分くらいだったかしら。私はずっと自分のブースにいたわよ。', id: 'z3' },
+      { time: '11:15', text: '中村さんとお茶してたわ。あの人いつも元気ねぇ。', id: 'z4' },
+      { time: '11:30', text: '審査ドキドキするわね〜。今年のは自信作よ。', id: 'z5' },
+      { time: '12:00', text: '山田さん……お気の毒に……ご冥福をお祈りするわ。', id: 'z6' },
+    ]
+  }
+];
+
+// 矛盾ペアの定義
+const contradictions = [
+  {
+    pair: ['n3', 'z3', 's3'],
+    // n3 vs s3 or z3 vs s3: 停電時間の矛盾
+    validPairs: [['n3', 's3'], ['z3', 's3']],
+    title: '矛盾1: 停電時間のズレ',
+    explanation: '中村会長と鈴木おばあちゃんは「5分」、佐藤さんは「10分」と証言。停電を短く見せたい人物がいる？ 実際の停電は10分 ── 犯行に十分な時間だ。'
+  },
+  {
+    pair: ['t3', 'z3'],
+    validPairs: [['t3', 'z3']],
+    title: '矛盾2: 停電中の所在',
+    explanation: '田中くんは停電中に「山田さんのブースに誰かいた」と目撃。しかし鈴木おばあちゃんは「ずっと自分のブースにいた」と証言。誰かが嘘をついている。'
+  },
+  {
+    pair: ['n2', 's4'],
+    validPairs: [['n2', 's4']],
+    title: '矛盾3: カレーの匂いの変化',
+    explanation: '10:30に中村会長は「いい香り」と言ったカレーが、停電後の11:15には「いつもと違う匂い」に変わっていた。停電中に何かが混入された証拠だ。'
+  }
+];
+
+// ゲーム状態
+let selectedEntry = null;
+let foundContradictions = [];
+
+function startGame() {
+  showScreen('investigation');
+  renderSuspects();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function renderSuspects() {
+  const area = document.getElementById('suspects-area');
+  area.innerHTML = suspects.map(s => `
+    <div class="suspect-card" id="card-${s.id}">
+      <div class="name">${s.emoji} ${s.name}</div>
+      <div class="desc">${s.desc}</div>
+      ${s.timeline.map(t => `
+        <div class="timeline-entry" id="entry-${t.id}" onclick="selectEntry('${t.id}')">
+          <span class="time">${t.time}</span>${t.text}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function selectEntry(id) {
+  const el = document.getElementById('entry-' + id);
+  if (el.classList.contains('found')) return;
+
+  if (selectedEntry === null) {
+    // 最初の選択
+    selectedEntry = id;
+    el.classList.add('selected');
+  } else if (selectedEntry === id) {
+    // 同じものをクリック → 解除
+    el.classList.remove('selected');
+    selectedEntry = null;
+  } else {
+    // 2つ目を選択 → 矛盾チェック
+    checkContradiction(selectedEntry, id);
+  }
+}
+
+function checkContradiction(id1, id2) {
+  let found = null;
+  for (const c of contradictions) {
+    if (foundContradictions.includes(c.title)) continue;
+    for (const [a, b] of c.validPairs) {
+      if ((id1 === a && id2 === b) || (id1 === b && id2 === a)) {
+        found = c;
+        break;
+      }
+    }
+    if (found) break;
+  }
+
+  // 前の選択を解除
+  document.getElementById('entry-' + selectedEntry).classList.remove('selected');
+  selectedEntry = null;
+
+  if (found) {
+    // 矛盾発見！
+    foundContradictions.push(found.title);
+    // 関連エントリをハイライト
+    for (const [a, b] of found.validPairs) {
+      document.getElementById('entry-' + a).classList.add('found');
+      document.getElementById('entry-' + b).classList.add('found');
+    }
+    // 矛盾表示
+    const list = document.getElementById('contradictions-list');
+    list.innerHTML += `
+      <div class="contradiction-found">
+        <h3>${found.title}</h3>
+        <p>${found.explanation}</p>
+      </div>
+    `;
+    document.getElementById('found-count').textContent = foundContradictions.length;
+    showNotification('矛盾を発見した！');
+
+    if (foundContradictions.length >= 3) {
+      const area = document.getElementById('accuse-area');
+      area.innerHTML = '<button class="btn" onclick="goToAccuse()">犯人を告発する</button>';
+    }
+  } else {
+    showNotification('矛盾ではないようだ......');
+    document.getElementById('entry-' + id2).classList.add('shake');
+    setTimeout(() => {
+      document.getElementById('entry-' + id2).classList.remove('shake');
+    }, 300);
+  }
+}
+
+function goToAccuse() {
+  showScreen('accuse');
+  const cards = document.getElementById('accuse-cards');
+  cards.innerHTML = suspects.map(s => `
+    <div class="accuse-card" onclick="accuse('${s.id}')">
+      <div class="emoji">${s.emoji}</div>
+      <div class="name">${s.name}</div>
+      <div class="desc">${s.desc}</div>
+    </div>
+  `).join('');
+}
+
+function accuse(id) {
+  showScreen('result');
+  const isCorrect = id === 'suzuki';
+  const title = document.getElementById('result-title');
+  const content = document.getElementById('result-content');
+
+  if (isCorrect) {
+    title.textContent = '正解 ── 犯人は鈴木おばあちゃん';
+    title.classList.add('result-correct');
+  } else {
+    const accused = suspects.find(s => s.id === id);
+    title.textContent = `不正解 ── ${accused.name}は犯人ではない`;
+    title.classList.add('result-wrong');
+  }
+
+  content.innerHTML = `
+    ${!isCorrect ? `
+    <div class="result-section">
+      <p>残念......犯人は<strong>鈴木おばあちゃん</strong>だった。</p>
+    </div>` : ''}
+    <div class="result-section">
+      <h2>推理の解説</h2>
+      <p><strong>矛盾1：停電時間</strong><br>
+      中村会長と鈴木おばあちゃんは「5分」、佐藤さんは「10分」と証言した。実際の停電は約10分。鈴木おばあちゃんは犯行時間を短く見せるため、停電時間を過少申告していた。</p>
+      <p><strong>矛盾2：停電中の所在</strong><br>
+      鈴木おばあちゃんは「ずっと自分のブースにいた」と証言したが、田中くんがスマホのライトで照らした際、山田さんのブースに人影を目撃している。それが鈴木おばあちゃんだった。</p>
+      <p><strong>矛盾3：カレーの匂い</strong><br>
+      停電前は「いい香り」だったカレーが、停電後は「いつもと違う匂い」に変わっていた。停電の10分間に、鈴木おばあちゃんが毒物を混入した証拠だ。</p>
+    </div>
+    <div class="result-section">
+      <h2>動機</h2>
+      <p>山田さんは先月、鈴木おばあちゃんの家の裏庭で<strong>大量の毒草が栽培されている</strong>のを偶然目撃していた。</p>
+      <p>「あら山田さん、これはね、ハーブよ。お料理に使うの」──鈴木おばあちゃんはそう言って笑った。</p>
+      <p>だが山田さんは薬学部出身だった。あれがトリカブトであることは一目でわかった。そして山田さんは気づいてしまった。ある疑惑に。</p>
+    </div>
+    <div class="result-section truth">
+      <h2>真相 ── 閲覧注意</h2>
+      <p>以下の真相はかなりショッキングな内容を含みます。<br>覚悟ができたら、黒塗り部分をクリックしてください。</p>
+      <br>
+      <p>この3年間で、にこにこ町では<strong>4人</strong>の高齢住民が「自然死」で亡くなっている。</p>
+      <p>全員、<span class="spoiler" onclick="this.classList.add('revealed')">鈴木おばあちゃんのカレーを食べた直後に体調を崩していた。</span></p>
+      <p>鈴木おばあちゃんは、裏庭で栽培したトリカブトから抽出した毒を使い、<span class="spoiler" onclick="this.classList.add('revealed')">「お世話」と称して一人暮らしの高齢者に手料理を振る舞い、少しずつ毒を盛って衰弱死させていた。</span></p>
+      <p>動機は<span class="spoiler" onclick="this.classList.add('revealed')">遺産。4人の被害者は全員、身寄りがなく、鈴木おばあちゃんを「遺言執行者」に指定していた。「あんなに親切にしてくれるおばあちゃんだから」と。</span></p>
+      <p>そして最もおぞましい事実──</p>
+      <p><span class="spoiler" onclick="this.classList.add('revealed')">毎年カレー大会で「深みがある」「コクがすごい」と評判だった鈴木おばあちゃんの「秘伝のスパイスカレー」。その隠し味として使われていた「特製ブイヨン」の原料は──被害者たちの遺品整理で手に入れた大量のペットフード......ではなく、被害者たちの遺骨を砕いて粉末にしたものだった。</span></p>
+      <p><span class="spoiler" onclick="this.classList.add('revealed')">「カルシウムたっぷりで、いいお出汁が出るのよ」──逮捕後、鈴木おばあちゃんはにっこり笑ってそう供述した。</span></p>
+      <p><span class="spoiler" onclick="this.classList.add('revealed')">山田さんはこの事実に気づきかけていた。だから、口封じのために殺された。薬学の知識がなければ、山田さんもまた「自然死」で処理されていただろう。</span></p>
+      <br>
+      <p style="color:#888; font-size:0.85em;">にこにこ町カレー大会は、この年を最後に二度と開催されることはなかった。</p>
+    </div>
+  `;
+}
+
+function showNotification(msg) {
+  const n = document.createElement('div');
+  n.className = 'notification';
+  n.textContent = msg;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 2000);
+}
+</script>
+</body>
+</html>
